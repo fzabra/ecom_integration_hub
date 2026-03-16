@@ -214,10 +214,20 @@
       </div>
     </aside>
 
-    <script src="/env.js"></script>
     <script>
-      const apiUrl = window.__CONFIG__.API_URL;
-      const workerUrl = apiUrl.replace(':3001', ':3003');
+      const qs = new URLSearchParams(window.location.search);
+      const savedApiUrl = localStorage.getItem('ecom_api_url');
+      const savedWorkerUrl = localStorage.getItem('ecom_worker_url');
+      const queryApiUrl = qs.get('api');
+      const queryWorkerUrl = qs.get('worker');
+
+      if (queryApiUrl) localStorage.setItem('ecom_api_url', queryApiUrl);
+      if (queryWorkerUrl) localStorage.setItem('ecom_worker_url', queryWorkerUrl);
+
+      const configApiUrl = (window.__CONFIG__ && window.__CONFIG__.API_URL) || queryApiUrl || savedApiUrl || 'http://localhost:3001';
+      const configWorkerUrl = (window.__CONFIG__ && window.__CONFIG__.WORKER_URL) || queryWorkerUrl || savedWorkerUrl;
+      const apiUrl = configApiUrl;
+      const workerUrl = configWorkerUrl || apiUrl.replace(':3001', ':3003');
       const dashboardDrawer = document.getElementById('dashboardDrawer');
       const openDashboardButton = document.getElementById('openDashboard');
       const closeDashboardButton = document.getElementById('closeDashboard');

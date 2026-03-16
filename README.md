@@ -59,3 +59,44 @@ npm run dev
 2. Finalize compra.
 3. Veja logs de integração em `http://localhost:3003/events`.
 
+## Deploy recomendado (Vercel + Render)
+
+### 1) Backend no Render
+
+Crie 2 serviços no Render:
+- `api` (Web Service)
+- `integration-worker` (Worker ou Web Service)
+
+Use estes comandos:
+- API build: `npm install`
+- API start: `npm --workspace apps/api run start`
+- Worker build: `npm install`
+- Worker start: `npm --workspace services/integration-worker run start`
+
+Configure variáveis:
+- API:
+  - `PORT=10000` (ou porta padrão do Render)
+  - `DATABASE_URL=<postgres externo>`
+  - `REDIS_URL=<redis externo>`
+  - `WEBHOOK_TARGETS=<url-do-worker>/webhooks/mock`
+- Worker:
+  - `PORT=10000` (se for Web Service)
+  - `REDIS_URL=<redis externo>`
+  - `ERP_PROVIDER=tiny-mock`
+  - `PIM_PROVIDER=akeneo-mock`
+  - `AI_PROVIDER=local-embeddings-mock`
+  - `ANALYTICS_PROVIDER=ga4-mock`
+
+### 2) Frontend no Vercel
+
+Este repositório já inclui:
+- `vercel.json`
+- `.vercelignore` (publica só o frontend estático)
+
+Depois do deploy, configure a URL da API/worker na própria URL do site:
+
+```text
+https://SEU-SITE.vercel.app/?api=https://SEU-API.onrender.com&worker=https://SEU-WORKER.onrender.com
+```
+
+A página salva esses valores em `localStorage`, então você configura uma vez e segue usando normalmente.

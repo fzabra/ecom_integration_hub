@@ -1,0 +1,3 @@
+*
+!apps/web/src/public/**
+!vercel.json
