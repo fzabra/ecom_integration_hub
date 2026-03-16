@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ecom Integration Hub</title>
+    <style>
+      :root {
+        --bg: #f7f4ef;
+        --text: #172026;
+        --brand: #0f766e;
+        --brand-soft: #ccfbf1;
+        --card: #ffffff;
+        --muted: #5b6470;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at 20% 0%, #fff, var(--bg));
+      }
+      header {
+        padding: 2rem 1rem;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      h1 {
+        margin: 0;
+        font-size: 2rem;
+      }
+      p { color: var(--muted); }
+      .layout {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 1rem 2rem;
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid #e8e5de;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .card img {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+      }
+      .card .body {
+        padding: .75rem;
+      }
+      .price {
+        font-weight: 700;
+      }
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: .55rem .9rem;
+        background: var(--brand);
+        color: white;
+        cursor: pointer;
+      }
+      .aside {
+        background: var(--card);
+        border: 1px solid #e8e5de;
+        border-radius: 16px;
+        padding: 1rem;
+        height: fit-content;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .small { font-size: .9rem; color: var(--muted); }
+      .ok {
+        margin-top: 1rem;
+        background: var(--brand-soft);
+        color: #134e4a;
+        padding: .75rem;
+        border-radius: 10px;
+      }
+      .fab {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        z-index: 20;
+        box-shadow: 0 10px 24px rgba(15, 118, 110, .25);
+      }
+      .drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: min(420px, 94vw);
+        height: 100vh;
+        z-index: 25;
+        background: var(--card);
+        border-left: 1px solid #dedbd5;
+        box-shadow: -14px 0 34px rgba(23, 32, 38, .15);
+        transform: translateX(102%);
+        transition: transform .24s ease;
+      }
+      .drawer.open {
+        transform: translateX(0);
+      }
+      .drawer-card {
+        height: 100%;
+        overflow: auto;
+        padding: 1rem;
+      }
+      .dash-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(150px, 1fr));
+        gap: .75rem;
+      }
+      .kpi {
+        border: 1px solid #e8e5de;
+        border-radius: 12px;
+        padding: .75rem;
+        background: #fcfcfb;
+      }
+      .kpi strong {
+        display: block;
+        font-size: 1.2rem;
+      }
+      .panel {
+        margin-top: .75rem;
+        border: 1px solid #e8e5de;
+        border-radius: 12px;
+        padding: .75rem;
+        background: #fcfcfb;
+      }
+      .log-list {
+        margin: .5rem 0 0;
+        padding-left: 1rem;
+      }
+      .log-list li {
+        margin: .35rem 0;
+        color: var(--muted);
+      }
+      @media (max-width: 860px) {
+        .layout { grid-template-columns: 1fr; }
+        .dash-grid { grid-template-columns: 1fr; }
+        .fab {
+          right: .75rem;
+          bottom: .75rem;
+          font-size: .85rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Ecom Integration Hub</h1>
+      <p>
+        Demo de portfólio: APIs + SaaS + ERP + PIM + IA + Analytics.
+      </p>
+    </header>
+
+    <main class="layout">
+      <section>
+        <div id="products" class="grid"></div>
+      </section>
+      <aside class="aside">
+        <h3>Carrinho</h3>
+        <div id="cart"></div>
+        <div class="row" style="margin-top: .7rem">
+          <span>Total</span>
+          <strong id="total">R$ 0,00</strong>
+        </div>
+        <button id="checkout" style="margin-top: 1rem; width: 100%">Finalizar compra</button>
+        <div class="small" style="margin-top: .8rem">checkout dispara eventos para worker (ERP/PIM/IA/analytics).</div>
+        <div id="message"></div>
+      </aside>
+    </main>
+    <button id="openDashboard" class="fab" aria-expanded="false">Dashboard Recruiter</button>
+    <aside id="dashboardDrawer" class="drawer" aria-label="Dashboard Recruiter">
+      <div class="drawer-card">
+        <div class="row">
+          <h3 style="margin:0">Dashboard em tempo real</h3>
+          <button id="closeDashboard">Recolher</button>
+        </div>
+        <p class="small">Atualiza a cada 3 segundos para demonstrar o pipeline de integrações.</p>
+        <div class="dash-grid">
+          <div class="kpi">
+            <span class="small">Pedidos</span>
+            <strong id="kpiOrders">0</strong>
+          </div>
+          <div class="kpi">
+            <span class="small">Receita</span>
+            <strong id="kpiRevenue">R$ 0,00</strong>
+          </div>
+          <div class="kpi">
+            <span class="small">Eventos de integração</span>
+            <strong id="kpiEvents">0</strong>
+          </div>
+        </div>
+        <div class="panel">
+          <strong>Últimos pedidos</strong>
+          <ul id="ordersList" class="log-list"></ul>
+        </div>
+        <div class="panel">
+          <strong>Últimos eventos</strong>
+          <ul id="eventsList" class="log-list"></ul>
+        </div>
+      </div>
+    </aside>
+
+    <script src="/env.js"></script>
+    <script>
+      const apiUrl = window.__CONFIG__.API_URL;
+      const workerUrl = apiUrl.replace(':3001', ':3003');
+      const dashboardDrawer = document.getElementById('dashboardDrawer');
+      const openDashboardButton = document.getElementById('openDashboard');
+      const closeDashboardButton = document.getElementById('closeDashboard');
+      const checkoutButton = document.getElementById('checkout');
+      let currentCartTotal = 0;
+
+      function brl(cents) {
+        return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      }
+
+      async function getJson(path, init) {
+        const res = await fetch(`${apiUrl}${path}`, {
+          ...init,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(init && init.headers ? init.headers : {})
+          }
+        });
+        return res.json();
+      }
+
+      async function renderProducts() {
+        const products = await getJson('/api/products');
+        const root = document.getElementById('products');
+        root.innerHTML = '';
+
+        products.forEach((product) => {
+          const card = document.createElement('article');
+          card.className = 'card';
+          card.innerHTML = `
+            <img src="${product.image_url}" alt="${product.name}" />
+            <div class="body">
+              <strong>${product.name}</strong>
+              <p class="small">${product.description}</p>
+              <div class="row">
+                <span class="price">${brl(product.price_cents)}</span>
+                <button data-id="${product.id}">Adicionar</button>
+              </div>
+            </div>
+          `;
+
+          card.querySelector('button').addEventListener('click', async () => {
+            await getJson('/api/cart/items', {
+              method: 'POST',
+              body: JSON.stringify({ productId: product.id, quantity: 1 })
+            });
+            await renderCart();
+          });
+
+          root.appendChild(card);
+        });
+      }
+
+      async function renderCart() {
+        const cart = await getJson('/api/cart');
+        const root = document.getElementById('cart');
+        currentCartTotal = cart.total_cents || 0;
+
+        if (!cart.items.length) {
+          root.innerHTML = '<p class="small">Carrinho vazio</p>';
+        } else {
+          root.innerHTML = cart.items.map((item) => `
+            <div class="row small" style="padding: .35rem 0">
+              <span>${item.quantity}x ${item.name}</span>
+              <span>${brl(item.quantity * item.price_cents)}</span>
+            </div>
+          `).join('');
+        }
+
+        document.getElementById('total').textContent = brl(cart.total_cents);
+        checkoutButton.disabled = false;
+        checkoutButton.style.opacity = '1';
+        checkoutButton.style.cursor = 'pointer';
+      }
+
+      checkoutButton.addEventListener('click', async () => {
+        const msg = document.getElementById('message');
+        if (currentCartTotal === 0) {
+          msg.innerHTML = `<div class="ok" style="background:#fff7ed;color:#9a3412">Adicione itens no carrinho antes de finalizar.</div>`;
+          return;
+        }
+        const result = await getJson('/api/checkout', {
+          method: 'POST',
+          body: JSON.stringify({ email: 'portfolio@example.com' })
+        });
+
+        if (result.error) {
+          msg.innerHTML = `<div class="ok" style="background:#fee2e2;color:#7f1d1d">${result.error}</div>`;
+          return;
+        }
+
+        msg.innerHTML = `<div class="ok">Pedido #${result.order.id} criado e integrações acionadas.</div>`;
+        await renderCart();
+        await refreshDashboard();
+      });
+
+      async function refreshDashboard() {
+        try {
+          const [orders, events] = await Promise.all([
+            getJson('/api/orders'),
+            fetch(`${workerUrl}/events`).then((res) => res.json()).then((data) => data.items || [])
+          ]);
+
+          const revenue = orders.reduce((sum, order) => sum + order.total_cents, 0);
+          document.getElementById('kpiOrders').textContent = String(orders.length);
+          document.getElementById('kpiRevenue').textContent = brl(revenue);
+          document.getElementById('kpiEvents').textContent = String(events.length);
+
+          const ordersList = document.getElementById('ordersList');
+          const latestOrders = orders.slice(0, 5);
+          ordersList.innerHTML = latestOrders.length
+            ? latestOrders.map((order) => `<li>#${order.id} | ${order.customer_email} | ${brl(order.total_cents)} | ${order.status}</li>`).join('')
+            : '<li>Nenhum pedido ainda.</li>';
+
+          const eventsList = document.getElementById('eventsList');
+          const latestEvents = events.slice(0, 7);
+          eventsList.innerHTML = latestEvents.length
+            ? latestEvents.map((event) => `<li>${event.type} | ${event.provider} | ${event.detail}</li>`).join('')
+            : '<li>Nenhum evento ainda.</li>';
+        } catch (_error) {
+          document.getElementById('kpiEvents').textContent = 'erro';
+        }
+      }
+
+      function openDashboard() {
+        dashboardDrawer.classList.add('open');
+        openDashboardButton.textContent = 'Ocultar Dashboard';
+        openDashboardButton.setAttribute('aria-expanded', 'true');
+        closeDashboardButton.focus();
+      }
+
+      function closeDashboard() {
+        dashboardDrawer.classList.remove('open');
+        openDashboardButton.textContent = 'Dashboard Recruiter';
+        openDashboardButton.setAttribute('aria-expanded', 'false');
+        openDashboardButton.focus();
+      }
+
+      function isDashboardOpen() {
+        return dashboardDrawer.classList.contains('open');
+      }
+
+      openDashboardButton.addEventListener('click', async () => {
+        if (isDashboardOpen()) {
+          closeDashboard();
+          return;
+        }
+        openDashboard();
+        await refreshDashboard();
+      });
+      closeDashboardButton.addEventListener('click', closeDashboard);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && isDashboardOpen()) closeDashboard();
+      });
+
+      renderProducts();
+      renderCart();
+      setInterval(refreshDashboard, 3000);
+    </script>
+  </body>
+</html>

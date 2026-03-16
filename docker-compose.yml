@@ -1,0 +1,66 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: ecom_postgres
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: ecommerce
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: ecom_redis
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgres://app:app@postgres:5432/ecommerce
+      REDIS_URL: redis://redis:6379
+      WEBHOOK_TARGETS: http://worker:3003/webhooks/mock
+      APP_BASE_URL: http://localhost:3001
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "3001:3001"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      PORT: 3000
+      API_URL: http://api:3001
+      PUBLIC_API_URL: http://localhost:3001
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: services/integration-worker/Dockerfile
+    environment:
+      PORT: 3003
+      REDIS_URL: redis://redis:6379
+      ERP_PROVIDER: tiny-mock
+      PIM_PROVIDER: akeneo-mock
+      AI_PROVIDER: local-embeddings-mock
+      ANALYTICS_PROVIDER: ga4-mock
+    depends_on:
+      - redis
+    ports:
+      - "3003:3003"
+
+volumes:
+  postgres_data:
