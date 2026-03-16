@@ -1,4 +1,7 @@
 {
+  "version": 2,
+  "buildCommand": "rm -rf dist && mkdir -p dist && cp -r apps/web/src/public/* dist/",
+  "outputDirectory": "dist",
   "cleanUrls": true,
   "rewrites": [
     {

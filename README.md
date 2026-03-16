@@ -90,8 +90,7 @@ Configure variáveis:
 ### 2) Frontend no Vercel
 
 Este repositório já inclui:
-- `vercel.json`
-- `.vercelignore` (publica só o frontend estático)
+- `vercel.json` (gera `dist` com o frontend estático)
 
 Depois do deploy, configure a URL da API/worker na própria URL do site:
 
