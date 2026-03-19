@@ -2,6 +2,11 @@
 
 Projeto de portfólio com foco em integrações para ecommerce.
 
+## Demo Live
+
+- URL: `https://ecom-integration-hub-api.vercel.app/?api=https://ecom-integration-api.onrender.com&worker=https://ecom-integration-worker.onrender.com`
+- Observação: no plano free do Render, o primeiro acesso pode levar alguns segundos devido ao wake-up da instância.
+
 ## O que demonstra
 
 - APIs REST e webhooks
