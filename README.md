@@ -1,11 +1,11 @@
 # Ecom Integration Hub
 
-Projeto de portfólio com foco em integrações para ecommerce.
+Portfolio project focused on ecommerce integrations.
 
 ## Demo Live
 
 - URL: [`https://ecom-integration-hub-api.vercel.app/?api=https://ecom-integration-api.onrender.com&worker=https://ecom-integration-worker.onrender.com`](https://ecom-integration-hub-api.vercel.app/?api=https://ecom-integration-api.onrender.com&worker=https://ecom-integration-worker.onrender.com)
-- Observação: no plano free do Render, o primeiro acesso pode levar alguns segundos devido ao wake-up da instância.
+- Note: on Render's free plan, the first request may take a few seconds due to instance wake-up.
 
 
 ## Health API
@@ -13,49 +13,49 @@ https://ecom-integration-api.onrender.com/health
 
 https://ecom-integration-worker.onrender.com/health
 
-## O que demonstra
+## What It Demonstrates
 
-- APIs REST e webhooks
-- SaaS (pagamento mock estilo Stripe)
-- ERP (sync de pedido e estoque no worker)
-- PIM (refresh de catálogo no worker)
-- IA (mock de recomendação/embedding)
-- Analytics (evento `purchase` mock)
+- REST APIs and webhooks
+- SaaS (Stripe-style mock payment)
+- ERP (order and inventory sync in the worker)
+- PIM (catalog refresh in the worker)
+- AI (mock recommendation/embedding)
+- Analytics (mock `purchase` event)
 
-## Arquitetura
+## Architecture
 
-- `apps/web`: storefront simples (Node + HTML)
-- `apps/api`: catálogo, carrinho, checkout, evento `order.created`
-- `services/integration-worker`: consumidor Redis para integrações
-- `postgres`: persistência de catálogo/pedido
-- `redis`: mensageria pub/sub
+- `apps/web`: simple storefront (Node + HTML)
+- `apps/api`: catalog, cart, checkout, `order.created` event
+- `services/integration-worker`: Redis consumer for integrations
+- `postgres`: catalog/order persistence
+- `redis`: pub/sub messaging
 
-Detalhes:
+Details:
 - [architecture.md](docs/architecture.md)
 - [integrations.md](docs/integrations.md)
 - [event-flow.md](docs/event-flow.md)
 
-## Rodar com Docker
+## Run with Docker
 
 ```bash
 docker compose up --build
 ```
 
-Acesse:
+Access:
 - Web: `http://localhost:3000`
 - API: `http://localhost:3001/health`
 - Worker events: `http://localhost:3003/events`
 
-## Rodar local (sem Docker)
+## Run Locally (Without Docker)
 
-Pré-requisitos: PostgreSQL e Redis locais.
+Prerequisites: local PostgreSQL and Redis.
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Endpoints principais
+## Main Endpoints
 
 - `GET /api/products`
 - `GET /api/cart`
@@ -64,49 +64,49 @@ npm run dev
 - `POST /api/checkout`
 - `GET /api/orders`
 
-## Fluxo de demonstração
+## Demo Flow
 
-1. Adicione produtos no carrinho pela web.
-2. Finalize compra.
-3. Veja logs de integração em `http://localhost:3003/events`.
+1. Add products to the cart through the web app.
+2. Complete checkout.
+3. View integration logs at `http://localhost:3003/events`.
 
-## Deploy recomendado (Vercel + Render)
+## Recommended Deployment (Vercel + Render)
 
-### 1) Backend no Render
+### 1) Backend on Render
 
-Crie 2 serviços no Render:
+Create 2 services on Render:
 - `api` (Web Service)
-- `integration-worker` (Worker ou Web Service)
+- `integration-worker` (Worker or Web Service)
 
-Use estes comandos:
+Use these commands:
 - API build: `npm install`
 - API start: `npm --workspace apps/api run start`
 - Worker build: `npm install`
 - Worker start: `npm --workspace services/integration-worker run start`
 
-Configure variáveis:
+Configure environment variables:
 - API:
-  - `PORT=10000` (ou porta padrão do Render)
-  - `DATABASE_URL=<postgres externo>`
-  - `REDIS_URL=<redis externo>`
-  - `WEBHOOK_TARGETS=<url-do-worker>/webhooks/mock`
+  - `PORT=10000` (or Render default port)
+  - `DATABASE_URL=<external-postgres>`
+  - `REDIS_URL=<external-redis>`
+  - `WEBHOOK_TARGETS=<worker-url>/webhooks/mock`
 - Worker:
-  - `PORT=10000` (se for Web Service)
-  - `REDIS_URL=<redis externo>`
+  - `PORT=10000` (if running as Web Service)
+  - `REDIS_URL=<external-redis>`
   - `ERP_PROVIDER=tiny-mock`
   - `PIM_PROVIDER=akeneo-mock`
   - `AI_PROVIDER=local-embeddings-mock`
   - `ANALYTICS_PROVIDER=ga4-mock`
 
-### 2) Frontend no Vercel
+### 2) Frontend on Vercel
 
-Este repositório já inclui:
-- `vercel.json` (gera `dist` com o frontend estático)
+This repository already includes:
+- `vercel.json` (builds `dist` with the static frontend)
 
-Depois do deploy, configure a URL da API/worker na própria URL do site:
+After deployment, configure the API/worker URL directly in the site URL:
 
 ```text
-https://SEU-SITE.vercel.app/?api=https://SEU-API.onrender.com&worker=https://SEU-WORKER.onrender.com
+https://YOUR-SITE.vercel.app/?api=https://YOUR-API.onrender.com&worker=https://YOUR-WORKER.onrender.com
 ```
 
-A página salva esses valores em `localStorage`, então você configura uma vez e segue usando normalmente.
+The page stores these values in `localStorage`, so you only need to configure them once.
