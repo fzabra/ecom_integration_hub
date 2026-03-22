@@ -232,7 +232,12 @@
       const openDashboardButton = document.getElementById('openDashboard');
       const closeDashboardButton = document.getElementById('closeDashboard');
       const checkoutButton = document.getElementById('checkout');
+      const productsRoot = document.getElementById('products');
+      const cartRoot = document.getElementById('cart');
+      const ordersListRoot = document.getElementById('ordersList');
+      const eventsListRoot = document.getElementById('eventsList');
       let currentCartTotal = 0;
+      let hasLoadedDashboardData = false;
 
       function brl(cents) {
         return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -249,58 +254,73 @@
         return res.json();
       }
 
+      function setCheckoutLoading(isLoading) {
+        checkoutButton.disabled = isLoading;
+        checkoutButton.style.opacity = isLoading ? '.65' : '1';
+        checkoutButton.style.cursor = isLoading ? 'not-allowed' : 'pointer';
+      }
+
       async function renderProducts() {
-        const products = await getJson('/api/products');
-        const root = document.getElementById('products');
-        root.innerHTML = '';
+        productsRoot.innerHTML = '<p class="small">Carregando produtos...</p>';
+        try {
+          const products = await getJson('/api/products');
+          productsRoot.innerHTML = '';
 
-        products.forEach((product) => {
-          const card = document.createElement('article');
-          card.className = 'card';
-          card.innerHTML = `
-            <img src="${product.image_url}" alt="${product.name}" />
-            <div class="body">
-              <strong>${product.name}</strong>
-              <p class="small">${product.description}</p>
-              <div class="row">
-                <span class="price">${brl(product.price_cents)}</span>
-                <button data-id="${product.id}">Adicionar</button>
+          products.forEach((product) => {
+            const card = document.createElement('article');
+            card.className = 'card';
+            card.innerHTML = `
+              <img src="${product.image_url}" alt="${product.name}" />
+              <div class="body">
+                <strong>${product.name}</strong>
+                <p class="small">${product.description}</p>
+                <div class="row">
+                  <span class="price">${brl(product.price_cents)}</span>
+                  <button data-id="${product.id}">Adicionar</button>
+                </div>
               </div>
-            </div>
-          `;
+            `;
 
-          card.querySelector('button').addEventListener('click', async () => {
-            await getJson('/api/cart/items', {
-              method: 'POST',
-              body: JSON.stringify({ productId: product.id, quantity: 1 })
+            card.querySelector('button').addEventListener('click', async () => {
+              await getJson('/api/cart/items', {
+                method: 'POST',
+                body: JSON.stringify({ productId: product.id, quantity: 1 })
+              });
+              await renderCart();
             });
-            await renderCart();
-          });
 
-          root.appendChild(card);
-        });
+            productsRoot.appendChild(card);
+          });
+        } catch (_error) {
+          productsRoot.innerHTML = '<p class="small">Nao foi possivel carregar os produtos.</p>';
+        }
       }
 
       async function renderCart() {
-        const cart = await getJson('/api/cart');
-        const root = document.getElementById('cart');
-        currentCartTotal = cart.total_cents || 0;
+        cartRoot.innerHTML = '<p class="small">Carregando carrinho...</p>';
+        setCheckoutLoading(true);
+        try {
+          const cart = await getJson('/api/cart');
+          currentCartTotal = cart.total_cents || 0;
 
-        if (!cart.items.length) {
-          root.innerHTML = '<p class="small">Carrinho vazio</p>';
-        } else {
-          root.innerHTML = cart.items.map((item) => `
-            <div class="row small" style="padding: .35rem 0">
-              <span>${item.quantity}x ${item.name}</span>
-              <span>${brl(item.quantity * item.price_cents)}</span>
-            </div>
-          `).join('');
+          if (!cart.items.length) {
+            cartRoot.innerHTML = '<p class="small">Carrinho vazio</p>';
+          } else {
+            cartRoot.innerHTML = cart.items.map((item) => `
+              <div class="row small" style="padding: .35rem 0">
+                <span>${item.quantity}x ${item.name}</span>
+                <span>${brl(item.quantity * item.price_cents)}</span>
+              </div>
+            `).join('');
+          }
+
+          document.getElementById('total').textContent = brl(cart.total_cents);
+          setCheckoutLoading(false);
+        } catch (_error) {
+          currentCartTotal = 0;
+          cartRoot.innerHTML = '<p class="small">Nao foi possivel carregar o carrinho.</p>';
+          document.getElementById('total').textContent = brl(0);
         }
-
-        document.getElementById('total').textContent = brl(cart.total_cents);
-        checkoutButton.disabled = false;
-        checkoutButton.style.opacity = '1';
-        checkoutButton.style.cursor = 'pointer';
       }
 
       checkoutButton.addEventListener('click', async () => {
@@ -325,6 +345,10 @@
       });
 
       async function refreshDashboard() {
+        if (!hasLoadedDashboardData) {
+          ordersListRoot.innerHTML = '<li>Carregando pedidos...</li>';
+          eventsListRoot.innerHTML = '<li>Carregando eventos...</li>';
+        }
         try {
           const [orders, events] = await Promise.all([
             getJson('/api/orders'),
@@ -336,19 +360,22 @@
           document.getElementById('kpiRevenue').textContent = brl(revenue);
           document.getElementById('kpiEvents').textContent = String(events.length);
 
-          const ordersList = document.getElementById('ordersList');
           const latestOrders = orders.slice(0, 5);
-          ordersList.innerHTML = latestOrders.length
+          ordersListRoot.innerHTML = latestOrders.length
             ? latestOrders.map((order) => `<li>#${order.id} | ${order.customer_email} | ${brl(order.total_cents)} | ${order.status}</li>`).join('')
             : '<li>Nenhum pedido ainda.</li>';
 
-          const eventsList = document.getElementById('eventsList');
           const latestEvents = events.slice(0, 7);
-          eventsList.innerHTML = latestEvents.length
+          eventsListRoot.innerHTML = latestEvents.length
             ? latestEvents.map((event) => `<li>${event.type} | ${event.provider} | ${event.detail}</li>`).join('')
             : '<li>Nenhum evento ainda.</li>';
+          hasLoadedDashboardData = true;
         } catch (_error) {
           document.getElementById('kpiEvents').textContent = 'erro';
+          if (!hasLoadedDashboardData) {
+            ordersListRoot.innerHTML = '<li>Erro ao carregar pedidos.</li>';
+            eventsListRoot.innerHTML = '<li>Erro ao carregar eventos.</li>';
+          }
         }
       }
 
