@@ -69,6 +69,7 @@ app.post('/api/checkout', async (req, res) => {
   }
 
   const client = await pool.connect();
+  let transactionCommitted = false;
   try {
     await client.query('BEGIN');
 
@@ -117,6 +118,7 @@ app.post('/api/checkout', async (req, res) => {
 
     await client.query('DELETE FROM cart_items');
     await client.query('COMMIT');
+    transactionCommitted = true;
 
     const charge = mockSaaSCharge(order);
     const event = {
@@ -128,12 +130,22 @@ app.post('/api/checkout', async (req, res) => {
       }
     };
 
-    await redis.publish('orders.created', JSON.stringify(event));
-    await sendWebhooks(event);
+    try {
+      await redis.publish('orders.created', JSON.stringify(event));
+      await sendWebhooks(event);
+    } catch (integrationError) {
+      console.error('[api] checkout completed but integration dispatch failed', integrationError);
+    }
 
     return res.status(201).json({ order, charge });
   } catch (error) {
-    await client.query('ROLLBACK');
+    if (!transactionCommitted) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('[api] rollback failed', rollbackError);
+      }
+    }
     console.error(error);
     return res.status(500).json({ error: 'erro ao processar checkout' });
   } finally {
